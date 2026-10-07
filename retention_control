@@ -1,0 +1,20 @@
+module retention_control (
+    input        clk,
+    input        reset,
+    input        retention_en,
+    input  [7:0] data_in,
+
+    output reg [7:0] retained_data
+);
+
+    always @(posedge clk or posedge reset) begin
+
+        if (reset)
+            retained_data <= 8'd0;
+
+        else if (retention_en)
+            retained_data <= data_in;
+
+    end
+
+endmodule
