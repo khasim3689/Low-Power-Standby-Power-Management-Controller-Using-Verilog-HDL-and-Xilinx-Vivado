@@ -1,0 +1,117 @@
+module power_management_controller (
+    input        clk,
+    input        reset,
+    input        standby_req,
+    input        wake_up,
+
+    output reg   power_gate_en,
+    output reg   retention_en,
+    output reg   isolation_en,
+    output reg   system_active,
+    output reg   block_select
+);
+
+    // State definitions
+    localparam ACTIVE    = 3'b000;
+    localparam STANDBY   = 3'b001;
+    localparam RETENTION = 3'b010;
+    localparam WAKE_UP   = 3'b011;
+
+    reg [2:0] state;
+    reg [2:0] next_state;
+
+    // State register
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            state <= ACTIVE;
+        else
+            state <= next_state;
+    end
+
+    // Next-state logic
+    always @(*) begin
+
+        next_state = state;
+
+        case (state)
+
+            ACTIVE: begin
+                if (standby_req)
+                    next_state = STANDBY;
+            end
+
+            STANDBY: begin
+                next_state = RETENTION;
+            end
+
+            RETENTION: begin
+                if (wake_up)
+                    next_state = WAKE_UP;
+            end
+
+            WAKE_UP: begin
+                next_state = ACTIVE;
+            end
+
+            default:
+                next_state = ACTIVE;
+
+        endcase
+    end
+
+    // Output control logic
+    always @(*) begin
+
+        // Default values
+        power_gate_en = 1'b0;
+        retention_en  = 1'b0;
+        isolation_en  = 1'b0;
+        system_active = 1'b0;
+        block_select  = 1'b0;
+
+        case (state)
+
+            ACTIVE: begin
+                power_gate_en = 1'b1;
+                retention_en  = 1'b0;
+                isolation_en  = 1'b0;
+                system_active = 1'b1;
+                block_select  = 1'b1;
+            end
+
+            STANDBY: begin
+                power_gate_en = 1'b0;
+                retention_en  = 1'b0;
+                isolation_en  = 1'b1;
+                system_active = 1'b0;
+                block_select  = 1'b0;
+            end
+
+            RETENTION: begin
+                power_gate_en = 1'b0;
+                retention_en  = 1'b1;
+                isolation_en  = 1'b1;
+                system_active = 1'b0;
+                block_select  = 1'b0;
+            end
+
+            WAKE_UP: begin
+                power_gate_en = 1'b1;
+                retention_en  = 1'b1;
+                isolation_en  = 1'b1;
+                system_active = 1'b0;
+                block_select  = 1'b1;
+            end
+
+            default: begin
+                power_gate_en = 1'b1;
+                retention_en  = 1'b0;
+                isolation_en  = 1'b0;
+                system_active = 1'b1;
+                block_select  = 1'b1;
+            end
+
+        endcase
+    end
+
+endmodule
