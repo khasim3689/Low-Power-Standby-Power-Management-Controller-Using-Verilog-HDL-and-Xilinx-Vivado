@@ -1,0 +1,14 @@
+module isolation_control (
+    input        isolation_en,
+    input  [7:0] block_data,
+    output reg [7:0] safe_output
+);
+
+    always @(*) begin
+        if (isolation_en)
+            safe_output = 8'd0;
+        else
+            safe_output = block_data;
+    end
+
+endmodule
