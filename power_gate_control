@@ -1,0 +1,17 @@
+module power_gate_control (
+    input  power_gate_en,
+    input  block_select,
+
+    output reg block_powered
+);
+
+    always @(*) begin
+
+        if (power_gate_en && block_select)
+            block_powered = 1'b1;
+        else
+            block_powered = 1'b0;
+
+    end
+
+endmodule
