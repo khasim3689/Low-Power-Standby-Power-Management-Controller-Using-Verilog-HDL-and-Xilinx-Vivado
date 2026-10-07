@@ -1,0 +1,103 @@
+module tb_standby_power_management;
+
+    reg clk;
+    reg reset;
+    reg standby_req;
+    reg wake_up;
+    reg [7:0] data_in;
+
+    wire power_gate_en;
+    wire retention_en;
+    wire isolation_en;
+    wire system_active;
+    wire block_select;
+    wire block_powered;
+
+    wire [7:0] retained_data;
+    wire [7:0] safe_output;
+
+    // Instantiate the top module
+    standby_system_top DUT (
+        .clk           (clk),
+        .reset         (reset),
+        .standby_req   (standby_req),
+        .wake_up       (wake_up),
+
+        .data_in       (data_in),
+
+        .power_gate_en (power_gate_en),
+        .retention_en  (retention_en),
+        .isolation_en  (isolation_en),
+        .system_active (system_active),
+        .block_select  (block_select),
+        .block_powered (block_powered),
+
+        .retained_data (retained_data),
+        .safe_output   (safe_output)
+    );
+
+    // Clock generation
+    initial begin
+        clk = 1'b0;
+        forever #5 clk = ~clk;
+    end
+
+    // Test sequence
+    initial begin
+
+        // Reset
+        reset       = 1'b1;
+        standby_req = 1'b0;
+        wake_up     = 1'b0;
+        data_in     = 8'd10;
+
+        #20;
+        reset = 1'b0;
+
+        // ACTIVE MODE
+        data_in = 8'd20;
+        #30;
+
+        // Request STANDBY
+        standby_req = 1'b1;
+        #10;
+
+        standby_req = 1'b0;
+
+        // STANDBY / RETENTION
+        data_in = 8'd50;
+        #30;
+
+        // WAKE-UP
+        wake_up = 1'b1;
+        #10;
+
+        wake_up = 1'b0;
+
+        // ACTIVE MODE AGAIN
+        data_in = 8'd80;
+        #30;
+
+        $finish;
+    end
+
+    // Monitor
+    initial begin
+        $monitor(
+            "Time=%0t | Reset=%b | Standby=%b | Wake=%b | Data=%d | PowerGate=%b | Retention=%b | Isolation=%b | Active=%b | BlockPower=%b | SafeOut=%d | Retained=%d",
+            $time,
+            reset,
+            standby_req,
+            wake_up,
+            data_in,
+            power_gate_en,
+            retention_en,
+            isolation_en,
+            system_active,
+            block_powered,
+            safe_output,
+            retained_data
+        );
+    end
+
+endmodule
