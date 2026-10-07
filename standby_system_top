@@ -1,0 +1,60 @@
+module standby_system_top (
+    input        clk,
+    input        reset,
+    input        standby_req,
+    input        wake_up,
+    input  [7:0] data_in,
+
+    output       power_gate_en,
+    output       retention_en,
+    output       isolation_en,
+    output       system_active,
+    output       block_select,
+    output       block_powered,
+    output [7:0] retained_data,
+    output [7:0] safe_output
+);
+
+    wire [7:0] block_data;
+
+    // Simple example processing block
+    assign block_data = data_in + 8'd1;
+
+    // Power Management Controller
+    power_management_controller U_CONTROLLER (
+        .clk           (clk),
+        .reset         (reset),
+        .standby_req   (standby_req),
+        .wake_up       (wake_up),
+
+        .power_gate_en (power_gate_en),
+        .retention_en  (retention_en),
+        .isolation_en  (isolation_en),
+        .system_active (system_active),
+        .block_select  (block_select)
+    );
+
+    // Power Gate Control
+    power_gate_control U_POWER_GATE (
+        .power_gate_en (power_gate_en),
+        .block_select  (block_select),
+        .block_powered (block_powered)
+    );
+
+    // Retention Control
+    retention_control U_RETENTION (
+        .clk           (clk),
+        .reset         (reset),
+        .retention_en  (retention_en),
+        .data_in       (block_data),
+        .retained_data (retained_data)
+    );
+
+    // Isolation Control
+    isolation_control U_ISOLATION (
+        .isolation_en  (isolation_en),
+        .block_data    (block_data),
+        .safe_output   (safe_output)
+    );
+
+endmodule
